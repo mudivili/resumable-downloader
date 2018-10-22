@@ -1,0 +1,21 @@
+{
+  "name": "resumable-downloader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "getopts": "^2.2.2",
+    "http-range": "^1.0.0",
+    "lodash.chunk": "^4.2.0",
+    "progress-stream": "^2.0.0"
+  },
+  "devDependencies": {
+    "debug": "^4.1.0",
+    "send": "^0.16.2"
+  }
+}
