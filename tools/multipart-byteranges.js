@@ -1,22 +1,21 @@
 const http = require('http');
+const lodashChunk = require('lodash.chunk');
 
 async function makeRangeRequests() {
 
   const details = await headRequest();
   console.log(details);
 
-  const ranges = generateRanges(details.contentLength, 10000);
+  const ranges = generateRanges(500000, 10000);
   const chunks = [];
   let chunksTotalLength = 0;
 
-  const rangeRequestPromises = ranges.map((range) => {
-    return makeRangeRequest(range);
-  });
+  for(let range of ranges) {
+    const chunk = await makeRangeRequest(range);
+    chunksTotalLength += chunk.length;
+  }
 
-  Promise.all(rangeRequestPromises).then((chunks) => {
-    chunksTotalLength = chunks.reduce((total, chunk) => total + chunk.length, 0);
-    console.log(`Downloaded all ranges. Total downloaded size: ${chunksTotalLength}`);
-  });
+  console.log(`Downloaded all ranges. Total downloaded size: ${chunksTotalLength}`);
 
 }
 
@@ -51,17 +50,16 @@ async function makeRangeRequest(range) {
 
     const rangeHeader = `bytes=${range.start}-${range.end}`;
     const options = {
-      hostname: 'i.imgur.com',
-      port: 80,
-      path: 'z4d4kWk.jpg',
+      hostname: 'fr5.seedr.cc',
+      path: '/ff_get/363113508/Miss.Potter.2006.720p.BluRay.x264-[YTS.AM].mp4?st=ZgmpNPc1jKctEhZ-Y_0vMA&e=1540349308',
       method: 'GET',
       headers: {
         'Range': rangeHeader
       }
     };
-    console.log(`Downloading ${rangeHeader}`);
+    // console.log(`Downloading ${rangeHeader}`, options);
 
-    const request = http.request(options, (response) => {
+    const request = require('https').request(options, (response) => {
 
       const chunks = [];
       let chunksTotalLength = 0;
@@ -72,11 +70,18 @@ async function makeRangeRequest(range) {
       });
 
       response.on('end', () => {
-        console.log(`STATUS: ${response.statusCode}`);
-        console.log({
-          contentRange: response.headers['content-range'],
-          contentLength: response.headers['content-length']
-        });
+
+        if (response.statusCode === 404) {
+          if(range.retry === 1) {
+            console.log(response.headers);
+          }
+          return makeRangeRequest({ ...range, retry: (range.retry || 0) + 1 });
+        }
+
+        console.log(`Response for url: ${options.hostname}${options.path} for range: ${rangeHeader}. 
+          Status: ${response.statusCode}. 
+          Retry: ${range.retry || 0}`, response.headers);
+
         resolve(Buffer.concat(chunks, chunksTotalLength));
       });
 
@@ -97,15 +102,15 @@ async function sampleRangeRequest() {
   return new Promise((resolve, reject) => {
 
     const options = {
-      hostname: 'i.imgur.com',
-      port: 80,
-      path: 'z4d4kWk.jpg',
+      hostname: 'fr5.seedr.cc',
+      // port: 443,
+      path: '/ff_get/363113508/Miss.Potter.2006.720p.BluRay.x264-[YTS.AM].mp4?st=ZgmpNPc1jKctEhZ-Y_0vMA&e=1540349308',
       method: 'GET',
       headers: {
         'Range': 'bytes=0-50'
       }
     };
-    const request = http.request(options, (response) => {
+    const request = require('https').request(options, (response) => {
 
       console.log(`STATUS: ${response.statusCode}`);
       console.log(response.headers);
@@ -137,17 +142,14 @@ async function headRequest() {
 
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'i.imgur.com',
-      port: 80,
-      path: 'z4d4kWk.jpg',
-      method: 'HEAD',
-      headers: {
-        'Range': 'bytes=0-50'
-      }
+      hostname: 'fr5.seedr.cc',
+      // port: 443,
+      path: '/ff_get/363113508/Miss.Potter.2006.720p.BluRay.x264-[YTS.AM].mp4?st=ZgmpNPc1jKctEhZ-Y_0vMA&e=1540349308',
+      method: 'HEAD'
     };
-    const request = http.request(options, (response) => {
+    const request = require('https').request(options, (response) => {
 
-      console.log(`STATUS: ${response.statusCode}`);
+      console.log(`HEAD STATUS: ${response.statusCode}`);
 
       resolve({
         contentType: response.headers['content-type'],
