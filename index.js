@@ -1,3 +1,4 @@
+process.binding('http_parser').HTTPParser = require('http-parser-js').HTTPParser;
 const getopts = require('getopts');
 const { Bar, Presets } = require('cli-progress');
 const colors = require('colors');
@@ -12,14 +13,17 @@ const options = getopts(process.argv.slice(2), {
   alias: {
     r: 'resume',
     p: 'parallel',
-    c: 'cache'
+    c: 'cache',
+    a: 'auth'
   },
+  string: ['a'],
   boolean: ['r'],
-  number: ['p', 'cache'],
+  number: ['p', 'c'],
   default: {
     r: true,
     parallel: 2,
-    cache: 10
+    cache: 10,
+    auth: ''
   }
 });
 const fileURL = options._[0];
